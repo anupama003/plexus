@@ -1,0 +1,8 @@
+# keep secrets and local clutter out of the image
+**/.env
+.venv/
+**/__pycache__/
+**/*.pyc
+.git/
+.DS_Store
+docs/

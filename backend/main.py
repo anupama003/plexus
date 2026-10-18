@@ -172,14 +172,16 @@ def _trace_item(name, args, out):
 
 
 GEMINI_BUSY_UNTIL = 0.0   # after a rate limit, let the graph agent answer for a minute instead of waiting
+GEMINI_TIMEOUT = float(os.getenv("GEMINI_TIMEOUT", "10"))   # slower than this, the graph agent answers instead
 
 
 def _gemini(body, user, trace):
     """Gemini picks tools over MCP as this person, on this incident; its calls become the trace."""
     turns = memory.load_turns(body.incident_id, user["name"], pane="agent", limit=12)
     history = [(t["role"], t["text"][:2000]) for t in turns]
-    answer, calls = asyncio.run(mcp_agent.run(body.message, user["name"], body.incident_id, history=history,
-                                              verbose=False, patient=False))
+    answer, calls = asyncio.run(asyncio.wait_for(
+        mcp_agent.run(body.message, user["name"], body.incident_id, history=history, verbose=False, patient=False),
+        GEMINI_TIMEOUT))
     for c in calls:
         trace.append(_trace_item(c["name"], c["args"], c["result"]))
     return answer
@@ -214,7 +216,7 @@ def agent_chat(body: ChatIn, user=Depends(current_user)):
                 while isinstance(e, BaseExceptionGroup) and e.exceptions:
                     e = e.exceptions[0]
                 log.warning("Gemini agent failed, graph agent answered: %s: %s", type(e).__name__, str(e)[:200])
-                GEMINI_BUSY_UNTIL = time.time() + (60 if isinstance(e, mcp_agent.GeminiBusy) else 300)
+                GEMINI_BUSY_UNTIL = time.time() + (60 if isinstance(e, (mcp_agent.GeminiBusy, TimeoutError)) else 300)
                 trace = []
         if engine == "graph":
             answer = _answer(body, user, trace)

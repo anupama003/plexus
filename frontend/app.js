@@ -146,7 +146,7 @@ async function loadFernwave() {
     box('Fix tasks', 'to the on-call owner', 'Linked to the Jira ticket already tracking it; shipping closes both', 'var(--amber)'),
     box('DORA assessments', 'for Compliance', 'Services and suppliers, assessed and recorded', 'var(--amber)'),
     box('Audit trail', 'for the CISO and auditors', 'Who knew what, when, and what they did', 'var(--violet)'),
-    box('MCP server', 'for your own AI tools', 'Plug the same 19 graph tools into Claude, Cursor or any MCP client', 'var(--cyan)'),
+    box('SBOMs', 'for customers and auditors', 'A CycloneDX parts list for every product, on demand', 'var(--cyan)'),
   ];
   $('fwflow').innerHTML = `<div class="grid gap-3 lg:gap-0 lg:grid-cols-[1fr_70px_1.05fr_70px_1fr] items-stretch">
     <div class="space-y-2"><div class="text-[10px] uppercase tracking-[.15em] text-faint mb-1">What plexus reads</div>${ins.join('')}</div>
@@ -157,7 +157,7 @@ async function loadFernwave() {
         <div class="flex items-center gap-2">${logo(26)}</div>
         <div class="text-[13px] text-muted mt-2 leading-snug">One <b class="text-fg">FalkorDB knowledge graph</b> that joins all of it: ${num(Object.values(n).reduce((a, b) => a + b, 0) - n.Exploited)} nodes, from the bug to the person who fixes it.</div>
         <div class="mt-4 space-y-2">
-          <div class="rounded-xl bg-ink/60 border hair px-3 py-2"><div class="text-[12px] font-medium text-cyan">Gemini agent</div><div class="text-[11px] text-muted">Gemini reads the question and chooses which of 19 graph tools to use, over MCP. A rule-based graph agent answers instantly if it's busy.</div></div>
+          <div class="rounded-xl bg-ink/60 border hair px-3 py-2"><div class="text-[12px] font-medium text-cyan">Ask anything</div><div class="text-[11px] text-muted">Plain-English questions, answered only from the graph, with the source behind every fact. Each person sees and does only what their role allows.</div></div>
           <div class="rounded-xl bg-ink/60 border hair px-3 py-2"><div class="text-[12px] font-medium text-amber">Watcher agent</div><div class="text-[11px] text-muted">Re-checks CISA's list against the graph every 15 min and leaves alerts for the team.</div></div>
           <div class="rounded-xl bg-ink/60 border hair px-3 py-2"><div class="text-[12px] font-medium text-green">Shared memory</div><div class="text-[11px] text-muted">Every incident, chat, decision and fix is saved in the graph, per person and per team.</div></div>
         </div>
@@ -754,9 +754,8 @@ const STEP = {
 };
 const STATUS = { ok: ['done', 'var(--green)'], not_found: ['not in the data', 'var(--amber)'], ambiguous: ['needs you to pick one', 'var(--amber)'],
                  denied: ['not allowed for your role', 'var(--red)'], invalid: ['could not read the question', 'var(--amber)'], error: ['failed', 'var(--red)'] };
-function proofHTML(trace, engine) {
-  const head = engine === 'gemini' ? '<div class="pt-2.5 text-[11px] text-violet" title="Gemini picked these from plexus\'s tools, over MCP">Steps Gemini took</div>' : '';
-  return head + trace.map((t, i) => {
+function proofHTML(trace) {
+  return trace.map((t, i) => {
     const [label, col] = STATUS[t.status] || ['?', 'var(--faint)'];
     return `<div class="py-2.5 ${i ? 'border-t hair' : ''}">
       <div class="flex items-center gap-2 text-sm"><span style="color:${col}">●</span><span>${esc(STEP[t.tool] || t.tool)}</span>
@@ -799,7 +798,7 @@ function renderAnswer(el, i) {
       ${d.trace.length ? `<button class="btn" data-a="proof">How we know</button>` : ''}
       ${draft ? `<button class="btn" data-a="export">⤓ Save draft</button>` : ''}
     </div>
-    <div data-slot="proof" class="hidden mt-2 rounded-xl border hair bg-ink/40 px-3">${proofHTML(d.trace, d.engine)}</div>`;
+    <div data-slot="proof" class="hidden mt-2 rounded-xl border hair bg-ink/40 px-3">${proofHTML(d.trace)}</div>`;
   // Suggested questions ("…" in italics) are clickable.
   el.querySelectorAll('.md em').forEach((m) => {
     const q = m.textContent.trim();
@@ -904,7 +903,7 @@ function renderReport() {
     const fromData = f.source.startsWith('graph');
     return `<label class="block"><div class="flex items-center justify-between gap-2 mb-1">
         <span class="text-xs font-medium">${esc(f.label)}${f.required ? '' : ' <span class="text-faint font-normal">(optional)</span>'}</span>
-        <span class="text-[10px] ${fromData ? 'text-green' : 'text-faint'}" title="${esc(f.source)}">${fromData ? '✓ from your data' : esc(f.source)}</span></div>${input}</label>`;
+        <span class="text-[10px] ${fromData ? 'text-green' : 'text-faint'}" title="${fromData ? 'Filled in from this incident and Fernwave\'s records' : esc(f.source)}">${fromData ? '✓ from your data' : esc(f.source)}</span></div>${input}</label>`;
   }).join('');
   const allSent = STAGE_ORDER.every((s) => done[s]);
   $('drawer-body').innerHTML = `
@@ -1396,7 +1395,7 @@ function drawRings(ctx, r) {
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.font = `${11 / s}px Geist`; ctx.fillStyle = isProduct ? 'rgba(167,139,250,.95)' : 'rgba(160,166,186,.75)';
-    ctx.fillText(isProduct ? `${k} hops · your products` : `${k} hop${k > 1 ? 's' : ''}`, 6 / s, -k * r.R - 6 / s);
+    ctx.fillText(isProduct ? 'your products' : `${k} step${k > 1 ? 's' : ''} from the bug`, 6 / s, -k * r.R - 6 / s);
   }
   ctx.restore();
 }

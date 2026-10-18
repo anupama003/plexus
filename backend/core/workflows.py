@@ -143,7 +143,7 @@ def report_package(cve_id, session_id, actor=None):
                        ", ".join(f"{EU_NAMES.get(c, c)} ({c})" for c in states),
                        "graph: (Product)-[:SOLD_IN {countries}]->(Market:EU)"),
                 _field("awareness", "Time the manufacturer became aware",
-                       f"{facts['awareness_time_utc']} (confirmed by {by or 'unknown'} via graph traversal)",
+                       f"{datetime.fromisoformat(facts['awareness_time_utc']).strftime('%d %b %Y, %H:%M UTC')} (confirmed by {by or 'unknown'})",
                        "graph: (Session)-[:INVESTIGATED {first_seen, by}]->(Vulnerability)"),
             ]},
         "notification": {
