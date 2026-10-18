@@ -6,7 +6,7 @@ When a new security bug is being exploited, plexus tells you which of your produ
 
 It's built on a [FalkorDB](https://www.falkordb.com/) graph.
 
-[Live](https://plexus-e0xc.onrender.com/) · [Video](#) · [Run it locally](#run-it)
+[Live](https://plexus-e0xc.onrender.com/) · [Video](https://www.loom.com/share/2d35a6bb8a4e4125b663edfa728ffdd5) · [Run it locally](#run-it)
 
 ![The answer on the left, and how the bug reaches each product on the right](docs/screenshots/blast-radius.jpg)
 
@@ -169,6 +169,6 @@ I used Claude Code as a coding assistant while building plexus. Inside the produ
 
 ---
 
-###You can run it on your phone too ;P
+### You can run it on your phone too ;P
 
 Built by Anupama Jedi · MIT License
