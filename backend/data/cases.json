@@ -1,0 +1,115 @@
+{
+  "_about": "Ten real incidents (2021-2025) where the hard part was tracing a flaw to what you ship and who fixes it. Facts checked against the sources listed with each case on 2026-10-17. setup_db.py loads these as (:Case)-[:ABOUT]->(:Vulnerability); /api/cases replays each one against Fernwave's graph.",
+  "cases": [
+    {
+      "id": "log4shell", "name": "Log4Shell", "cves": ["CVE-2021-44228"], "date": "2021-12-09",
+      "pattern": "Buried dependency",
+      "stat": "10.0", "stat_label": "severity (maximum)",
+      "happened": "A Java logging library used almost everywhere ran code sent inside a log message. Attacks started about a week before the public disclosure.",
+      "hard_part": "Log4j sat inside thousands of other components. The US Cyber Safety Review Board called it an endemic vulnerability that could linger for a decade or more.",
+      "sources": [
+        {"label": "CSRB report coverage (GovInfoSecurity)", "url": "https://www.govinfosecurity.com/log4j-flaw-endemic-says-cyber-safety-review-board-a-19575"},
+        {"label": "Help Net Security", "url": "https://www.helpnetsecurity.com/2021/12/10/cve-2021-44228/"}
+      ]
+    },
+    {
+      "id": "libwebp", "name": "libwebp image flaw", "cves": ["CVE-2023-4863"], "date": "2023-09-11",
+      "pattern": "Mislabelled scope",
+      "stat": "\"Chrome bug\"", "stat_label": "how it was first labelled",
+      "happened": "A flaw in Google's WebP image library was used in real attacks. It was first published as a Chrome issue, then widened to libwebp itself.",
+      "hard_part": "The library is bundled in browsers, Electron apps, 1Password for macOS and image libraries such as Pillow. Teams that only checked for Chrome missed it.",
+      "sources": [
+        {"label": "Help Net Security", "url": "https://www.helpnetsecurity.com/2023/09/27/cve-2023-5129/"},
+        {"label": "Snyk", "url": "https://snyk.io/blog/critical-webp-0-day-cve-2023-4863/"}
+      ]
+    },
+    {
+      "id": "rapidreset", "name": "HTTP/2 Rapid Reset", "cves": ["CVE-2023-44487"], "date": "2023-10-10",
+      "pattern": "Everywhere at once",
+      "stat": "398M", "stat_label": "requests per second (Google)",
+      "happened": "Opening and instantly cancelling HTTP/2 streams produced the largest DDoS attacks recorded at the time. Google's peak was more than 8× its previous record.",
+      "hard_part": "One protocol flaw, many separate fixes: Netty, Go, nginx and others each needed their own patch, so you had to know which one every service used.",
+      "sources": [
+        {"label": "Google Cloud", "url": "https://cloud.google.com/blog/products/identity-security/google-cloud-mitigated-largest-ddos-attack-peaking-above-398-million-rps/"},
+        {"label": "TechTarget", "url": "https://www.techtarget.com/cybersecurity/news/366554941/Rapid-Reset-DDoS-attacks-exploiting-HTTP-2-vulnerability"}
+      ]
+    },
+    {
+      "id": "moveit", "name": "MOVEit Transfer", "cves": ["CVE-2023-34362"], "date": "2023-05-31",
+      "pattern": "Supplier dependency",
+      "stat": "2,600+", "stat_label": "organisations · 77M+ people",
+      "happened": "The Cl0p gang mass-exploited a file-transfer product and stole data from its customers, and from their customers.",
+      "hard_part": "British Airways, the BBC and Boots never ran MOVEit. Their payroll provider Zellis did. The exposure was in a supplier, not in their own code.",
+      "sources": [
+        {"label": "Emsisoft tally (GovInfoSecurity)", "url": "https://www.govinfosecurity.com/known-moveit-attack-victim-count-reaches-2618-organizations-a-23640"},
+        {"label": "The Record: Zellis, BA, BBC", "url": "https://therecord.media/bbc-british-airways-hit-by-zellis-zero-day"}
+      ]
+    },
+    {
+      "id": "citrixbleed", "name": "Citrix Bleed", "cves": ["CVE-2023-4966"], "date": "2023-10-10",
+      "pattern": "Patch is not the fix",
+      "stat": "10,400+", "stat_label": "exposed servers counted",
+      "happened": "Remote-access gateways leaked session tokens, so attackers skipped passwords and MFA. LockBit used it against Boeing, ICBC's US arm and DP World Australia.",
+      "hard_part": "Installing the update didn't kick out attackers already holding stolen sessions. You also had to know to end every session: the 'how we fixed it' step.",
+      "sources": [
+        {"label": "Help Net Security", "url": "https://www.helpnetsecurity.com/2023/11/22/lockbit-citrix-bleed/"},
+        {"label": "Picus Security", "url": "https://picussecurity.com/resource/blog/cve-2023-4966-lockbit-exploits-citrix-bleed-in-ransomware-attacks"}
+      ]
+    },
+    {
+      "id": "ivanti", "name": "Ivanti Connect Secure", "cves": ["CVE-2023-46805", "CVE-2024-21887"], "date": "2024-01-10",
+      "pattern": "Fix arrives in stages",
+      "stat": "48h", "stat_label": "US agencies had to disconnect",
+      "happened": "Two chained flaws in VPN gateways gave attackers unauthenticated control. CISA ordered federal agencies to disconnect the devices, and CISA itself lost two systems to the same flaws.",
+      "hard_part": "Mitigations, partial patches and full patches came weeks apart. Every device had to be tracked as patched, mitigated or still exposed.",
+      "sources": [
+        {"label": "The Record: disconnect order", "url": "https://therecord.media/federal-civilian-agencies-ordered-to-disconnect-at-risk-ivanti-products-cisa"},
+        {"label": "TechRadar: CISA breached", "url": "https://www.techradar.com/pro/security/cisa-confirms-it-was-breached-by-attackers-using-ivanti-flaws-some-systems-taken-offline"}
+      ]
+    },
+    {
+      "id": "xz", "name": "xz utils backdoor", "cves": ["CVE-2024-3094"], "date": "2024-03-29",
+      "pattern": "Poisoned supply chain",
+      "stat": "~2 yrs", "stat_label": "spent earning maintainer trust",
+      "happened": "An account called 'Jia Tan' became a maintainer of a small compression library and hid a backdoor in versions 5.6.0 and 5.6.1. An engineer found it by chance, from slow SSH logins.",
+      "hard_part": "Every company had to answer one question at once: do we ship xz 5.6.0 or 5.6.1 anywhere, even in a build image?",
+      "sources": [
+        {"label": "Wikipedia", "url": "https://en.wikipedia.org/wiki/XZ_Utils_backdoor"},
+        {"label": "Intruder", "url": "https://blog.intruder.io/blog/xz-utils-cve-2024-3094"}
+      ]
+    },
+    {
+      "id": "panos", "name": "Palo Alto PAN-OS", "cves": ["CVE-2024-3400"], "date": "2024-04-12",
+      "pattern": "Zero-day in the guard",
+      "stat": "10.0", "stat_label": "severity, no patch at first",
+      "happened": "A firewall flaw let unauthenticated attackers run code as root. It was exploited before any fix existed, and attackers moved on into victims' networks.",
+      "hard_part": "Only some versions with two settings turned on were exposed. Knowing exactly which devices ran which version and configuration decided who was at risk.",
+      "sources": [
+        {"label": "TechTarget", "url": "https://www.techtarget.com/cybersecurity/news/366580732/Palo-Alto-Networks-discloses-RCE-zero-day-vulnerability"},
+        {"label": "Kroll", "url": "https://www.kroll.com/en/insights/publications/cyber/cve-2024-3400-zero-day-remote-code-execution-vulnerability"}
+      ]
+    },
+    {
+      "id": "toolshell", "name": "SharePoint ToolShell", "cves": ["CVE-2025-53770"], "date": "2025-07-19",
+      "pattern": "Patch bypassed",
+      "stat": "148", "stat_label": "organisations · 400+ servers",
+      "happened": "Self-hosted SharePoint servers were hacked in bulk, including the US nuclear weapons agency (NNSA). The flaw got around an earlier patch.",
+      "hard_part": "Teams that had patched in early July were still exposed. They needed to know which servers had the second fix, not just 'a' fix.",
+      "sources": [
+        {"label": "Cybersecurity Dive", "url": "https://www.cybersecuritydive.com/news/microsoft-cisa-warn-cyberattacks-sharepoint/753574"},
+        {"label": "CPO Magazine: NNSA", "url": "https://www.cpomagazine.com/?p=39492"}
+      ]
+    },
+    {
+      "id": "react2shell", "name": "React2Shell", "cves": ["CVE-2025-55182"], "date": "2025-12-03",
+      "pattern": "Framework inheritance",
+      "stat": "2 days", "stat_label": "from disclosure to CISA's exploited list",
+      "happened": "A maximum-severity flaw in React Server Components let anyone run code on web servers. A default Next.js app was exploitable with no code changes.",
+      "hard_part": "Few teams chose React Server Components directly. They inherited them through Next.js and other frameworks.",
+      "sources": [
+        {"label": "Rapid7", "url": "https://www.rapid7.com/blog/post/etr-react2shell-cve-2025-55182-critical-unauthenticated-rce-affecting-react-server-components"},
+        {"label": "Wiz", "url": "https://www.wiz.io/blog/critical-vulnerability-in-react-cve-2025-55182"}
+      ]
+    }
+  ]
+}
