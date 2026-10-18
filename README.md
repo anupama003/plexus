@@ -6,7 +6,7 @@ When a new security bug is being exploited, plexus tells you which of your produ
 
 It's built on a [FalkorDB](https://www.falkordb.com/) graph.
 
-[Live demo](#) · [Video](#) · [Run it locally](#run-it)
+[Live](https://plexus-e0xc.onrender.com/) · [Video](#) · [Run it locally](#run-it)
 
 ![The answer on the left, and how the bug reaches each product on the right](docs/screenshots/blast-radius.jpg)
 
@@ -165,8 +165,10 @@ docs/                queries, decisions, flows, deploy, and a plain-English guid
 
 ## How this was built
 
-I used Claude Code as a coding assistant while building plexus. Inside the product, Google Gemini picks which graph tools to call, and every answer comes from those tools.
+I used Claude Code as a coding assistant while building plexus. Inside the product, Google Gemini picks which graph tools to call, and every answer comes from those tools. 
 
 ---
+
+###You can run it on your phone too ;P
 
 Built by Anupama Jedi · MIT License
