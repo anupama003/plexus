@@ -30,6 +30,7 @@ FALKOR_HOST = os.getenv("FALKOR_HOST", "localhost")
 FALKOR_PORT = int(os.getenv("FALKOR_PORT", "6479"))
 FALKOR_PASSWORD = os.getenv("FALKOR_PASSWORD") or None
 FALKOR_USERNAME = os.getenv("FALKOR_USERNAME") or None
+FALKOR_SSL = os.getenv("FALKOR_SSL", "").lower() in ("1", "true", "yes")
 GRAPH_NAME = os.getenv("GRAPH_NAME", "plexus")
 SNAPSHOT = Path(__file__).resolve().parent / "data" / "real_snapshot.json"
 CASES = Path(__file__).resolve().parent / "data" / "cases.json"
@@ -596,7 +597,7 @@ def verify_against(snapshot):
 
 def connect():
     return FalkorDB(host=FALKOR_HOST, port=FALKOR_PORT, username=FALKOR_USERNAME,
-                    password=FALKOR_PASSWORD).select_graph(GRAPH_NAME)
+                    password=FALKOR_PASSWORD, ssl=FALKOR_SSL).select_graph(GRAPH_NAME)
 
 
 def seed():

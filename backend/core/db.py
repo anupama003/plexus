@@ -17,6 +17,7 @@ _db = FalkorDB(
     port=int(os.getenv("FALKOR_PORT", "6479")),
     username=os.getenv("FALKOR_USERNAME") or None,
     password=os.getenv("FALKOR_PASSWORD") or None,
+    ssl=os.getenv("FALKOR_SSL", "").lower() in ("1", "true", "yes"),
 )
 
 

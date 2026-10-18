@@ -8,7 +8,7 @@ It's built on a [FalkorDB](https://www.falkordb.com/) graph.
 
 [Live demo](#) · [Video](#) · [Run it locally](#run-it)
 
-![The answer on the left, and how the bug reaches each product on the right](backend/docs/screenshots/blast-radius.jpg)
+![The answer on the left, and how the bug reaches each product on the right](docs/screenshots/blast-radius.jpg)
 
 ---
 

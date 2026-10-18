@@ -7,4 +7,5 @@ COPY backend backend
 COPY frontend frontend
 WORKDIR /app/backend
 # Render/Railway inject $PORT; default to 8042 locally.
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8042}"]
+# SEED_ON_START=true reloads the demo data every time the container starts.
+CMD ["sh", "-c", "if [ \"$SEED_ON_START\" = true ]; then python setup_db.py; fi; exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8042}"]
