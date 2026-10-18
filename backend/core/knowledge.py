@@ -1,4 +1,5 @@
 """Company knowledge (teams, tickets, chat, decisions) and graph-algorithm tools."""
+import json
 import re
 import uuid
 from datetime import datetime, timezone
@@ -290,11 +291,14 @@ RETURN id(n), labels(n)[0], k ORDER BY exact DESC, size(k) LIMIT 1
 """
 
 
+STRUCTURAL = {"DEPENDS_ON", "AFFECTS", "SHIPS", "OWNS", "MEMBER_OF", "MAINTAINS", "BUILDS", "COMMITTED_TO", "SOLD_IN"}
+# algo.SPpaths rather than shortestPath(): older FalkorDB releases (e.g. FalkorDB Cloud) reject undirected shortestPath
 CYPHER_CONNECTION = f"""
 MATCH (a), (b) WHERE id(a) = $a AND id(b) = $b
-WITH a, b, shortestPath((a)-[:{LINK_TYPES}*..8]-(b)) AS p
-RETURN [n IN nodes(p) | [id(n), labels(n)[0], coalesce(n.id, n.key, n.name, n.title)]],
-       [r IN relationships(p) | [type(r), id(startNode(r))]]
+CALL algo.SPpaths({{sourceNode: a, targetNode: b, relTypes: {json.dumps(LINK_TYPES.split("|"))},
+                   relDirection: 'both', maxLen: 8, pathCount: 20}}) YIELD path
+RETURN [n IN nodes(path) | [id(n), labels(n)[0], coalesce(n.id, n.key, n.name, n.title)]],
+       [r IN relationships(path) | [type(r), id(startNode(r))]]
 """
 
 
@@ -316,7 +320,8 @@ def connection(from_name, to_name, **_):
     rows = q(CYPHER_CONNECTION, {"a": ends[0][0], "b": ends[1][0]})
     if not rows or not rows[0][0]:
         return fail("not_found", f"No chain of up to 8 links connects {ends[0][2]} and {ends[1][2]}.", CYPHER_CONNECTION)
-    nodes, rels = rows[0]
+    # among equally short chains, prefer ones made of code and ownership over ticket or chat mentions
+    nodes, rels = min(rows, key=lambda r: (len(r[1]), sum(t not in STRUCTURAL for t, _ in r[1])))
     steps, path = [], f"({nodes[0][1]}:{nodes[0][2]})"
     for (rtype, start), (nid, label, key), (pid, plabel, pkey) in zip(rels, nodes[1:], nodes[:-1]):
         forward = start == pid

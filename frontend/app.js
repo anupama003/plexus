@@ -65,7 +65,8 @@ async function api(path, opts = {}) {
   if (r.status === 401) setTimeout(logout, 1200);
   if (!r.ok) {
     const d = data.detail;
-    const err = new Error(Array.isArray(d) ? d.map((x) => x.msg).join('; ') : d || r.statusText);
+    const fallback = r.status >= 500 ? 'Something went wrong on our side. Please try again in a moment.' : 'That didn\'t work. Please try again.';
+    const err = new Error(Array.isArray(d) ? d.map((x) => x.msg).join('; ') : d || fallback);
     err.status = r.status; throw err;
   }
   return data;
@@ -1315,7 +1316,8 @@ function storyOf(trace) {
     });
   }));
   const ids = [...new Set([...steps.map((s) => s[0]), ...ok.flatMap((t) => t.touched)])].filter((id) => BASE[id]);
-  return { steps, ids, deepest };
+  const hasBug = ids.some((id) => BASE[id].group === 'Vulnerability');   // path and blast radius only make sense from a bug
+  return { steps, ids, deepest, hasBug };
 }
 
 // radial layout: a tree around the bug. Each branch gets a slice of the
@@ -1446,11 +1448,11 @@ function play(story, view) {
 function render() {
   if (!graphReady) return;
   clearInterval(timer);
-  const view = LAST ? VIEW : 'company';
   const story = LAST ? storyOf(LAST) : null;
+  const view = story?.hasBug ? VIEW : 'company';
   if (view === 'company' || !story?.ids.length) {
     build('company', null);
-    $('hopinfo').textContent = '';
+    $('hopinfo').textContent = story?.ids.length ? 'This answer, lit up on the company map' : '';
   } else {
     build(view, story.ids);
     play(story, view);
@@ -1458,7 +1460,7 @@ function render() {
     $('hopinfo').textContent = d ? `How the bug reaches ${pretty(d[0]).name}` : '';
   }
   document.querySelectorAll('[data-view]').forEach((b) => {
-    const on = b.dataset.view === view, needs = b.dataset.view !== 'company' && !story?.ids.length;
+    const on = b.dataset.view === view, needs = b.dataset.view !== 'company' && !story?.hasBug;
     b.disabled = needs;
     b.title = needs ? 'Ask about a bug first' : '';
     b.style.cssText = on ? 'background:var(--raised);color:var(--fg);border-color:var(--line2)' : '';
@@ -1468,7 +1470,7 @@ document.querySelectorAll('[data-view]').forEach((b) => b.onclick = () => { VIEW
 function showAnswer(trace) {
   if (!storyOf(trace).ids.length) return;
   LAST = trace;
-  if (VIEW === 'company') VIEW = 'path';
+  if (VIEW === 'company' && storyOf(trace).hasBug) VIEW = 'path';
   render();
 }
 function resetMap() { LAST = null; VIEW = 'company'; render(); }

@@ -190,12 +190,14 @@ ORDER BY in_products DESC, bugs DESC LIMIT 10
 ```
 
 ### How are two things connected? (shortest path)
-`core/knowledge.py · CYPHER_CONNECTION`. In FalkorDB, `shortestPath` goes in a `WITH` or `RETURN`, not in the `MATCH`.
+`core/knowledge.py · CYPHER_CONNECTION`: uses FalkorDB's `algo.SPpaths` procedure, which can walk relationships in either direction. Priya *maintains* a part, but the bug *affects* one, so the path has to go both ways.
 
 ```cypher
 MATCH (a:Person {name: 'Priya Raman'}), (b:Vulnerability {id: 'CVE-2023-4863'})
-WITH shortestPath((a)-[:DEPENDS_ON|AFFECTS|SHIPS|OWNS|MEMBER_OF|MAINTAINS*..8]-(b)) AS p
-RETURN [n IN nodes(p) | coalesce(n.id, n.key, n.name)] AS chain
+CALL algo.SPpaths({sourceNode: a, targetNode: b,
+                   relTypes: ['DEPENDS_ON', 'AFFECTS', 'SHIPS', 'OWNS', 'MEMBER_OF', 'MAINTAINS'],
+                   relDirection: 'both', maxLen: 8, pathCount: 1}) YIELD path
+RETURN [n IN nodes(path) | coalesce(n.id, n.key, n.name)] AS chain
 ```
 
 Priya maintains receipt-renderer, which uses Pillow, which bundles libwebp 1.3.1, which has the bug.
@@ -256,6 +258,7 @@ RETURN r.cve, p.name, r.by, r.ts, r.note ORDER BY r.ts DESC
 ## Things FalkorDB taught me
 
 - **A second `MATCH` after a filtered one needs a `WITH` in between**, or it quietly returns nothing.
-- **`shortestPath` only works inside `WITH` or `RETURN`.**
+- **Not every FalkorDB version supports an undirected `shortestPath`.** `algo.SPpaths` with `relDirection: 'both'` works everywhere, so that's what plexus uses.
+- **Put brackets around `+` inside `STARTS WITH`, and around `x IN list` after `NOT`.** `c.key STARTS WITH (n + '@')` and `NOT (c.key IN $list)`. Some versions read them differently without the brackets.
 - **`null IN [...]` breaks a `none(...)` filter.** That's why the what-if query uses `coalesce(n.key, '')`.
 - **To look nodes up by a list of ids, unwind the list.** `WHERE id(n) IN $list` checks every node; `UNWIND $ids AS x MATCH (n) WHERE id(n) = x` jumps straight to each one. At 124,000 nodes that was the difference between a timeout and 62 ms.

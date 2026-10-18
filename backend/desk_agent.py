@@ -417,7 +417,7 @@ def _patched_copies(cve, affected_keys, hit_products):
     """Other versions of the same library that products ship, which this CVE does not affect."""
     names = sorted({k.split("@")[0] for k in affected_keys})
     rows = db.q("""
-        MATCH (c:Component) WHERE any(n IN $names WHERE c.key STARTS WITH n + '@') AND NOT c.key IN $affected
+        MATCH (c:Component) WHERE any(n IN $names WHERE c.key STARTS WITH (n + '@')) AND NOT (c.key IN $affected)
         WITH c
         MATCH (c)<-[:DEPENDS_ON*0..10]-(:Component)<-[:SHIPS]-(p:Product)
         RETURN DISTINCT p.name, c.name, c.version ORDER BY p.name""", {"names": names, "affected": list(affected_keys)})
