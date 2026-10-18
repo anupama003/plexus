@@ -30,15 +30,22 @@ const may = (perm) => (USER?.permissions || []).includes(perm);
 function glossary(root = document) {
   root.querySelectorAll('abbr[data-g]').forEach((a) => { a.title = GLOSS[a.dataset.g] || ''; });
 }
+let LOGO_N = 0;
 function logo(size) {
-  // interlinked nodes: one red (the bug), one cyan (the customer)
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">
-      <defs><linearGradient id="lg${size}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs>
-      <g stroke="url(#lg${size})" stroke-width="1.3" stroke-linecap="round" opacity=".9">
-        <path d="M4 7 L12 4 L20 8 L18 17 L9 20 L4 14 Z" fill="none"/><path d="M4 7 L12 12 L20 8 M12 12 L18 17 M12 12 L9 20 M12 12 L4 14 M12 4 L12 12"/></g>
-      <circle cx="12" cy="12" r="2.4" fill="#8B5CF6"/><circle cx="4" cy="7" r="2" fill="#FF5470"/>
-      <circle cx="12" cy="4" r="1.5" fill="#8B5CF6"/><circle cx="20" cy="8" r="1.5" fill="#8B5CF6"/><circle cx="4" cy="14" r="1.5" fill="#8B5CF6"/><circle cx="9" cy="20" r="1.5" fill="#8B5CF6"/>
-      <circle cx="18" cy="17" r="2.2" fill="#22D3EE" class="pulse"/></svg>
+  // the bug (red diamond) spreading through layers of software to a customer (cyan); small sizes drop the detail
+  const id = LOGO_N++, small = size < 24;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
+      <defs><linearGradient id="lt${id}" x1="16" y1="16" x2="24" y2="4" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FF5470"/><stop offset=".45" stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient>
+        <linearGradient id="lr${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs>
+      ${small ? '' : `<circle cx="16" cy="16" r="6.8" fill="none" stroke="#8B5CF6" stroke-opacity=".5" stroke-width="1.2" stroke-dasharray="2 1.8"/>
+      <circle cx="16" cy="16" r="10.8" fill="none" stroke="#8B5CF6" stroke-opacity=".38" stroke-width="1.2" stroke-dasharray="2 1.8"/>
+      <path d="M16 16 L9.8 13.2 L5.4 15.6 L2.9 20.6" fill="none" stroke="#8B5CF6" stroke-opacity=".6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="9.8" cy="13.2" r="1.4" fill="#8B5CF6"/><circle cx="5.4" cy="15.6" r="1.4" fill="#8B5CF6"/><circle cx="2.9" cy="20.6" r="1.9" fill="#8B5CF6"/>`}
+      <circle cx="16" cy="16" r="14.4" fill="none" stroke="url(#lr${id})" stroke-width="${small ? 2.4 : 1.6}"/>
+      <path d="M16 16 L22.6 14.6 L24.6 9.8 L23.4 4.2" fill="none" stroke="url(#lt${id})" stroke-width="${small ? 3 : 2.2}" stroke-linecap="round" stroke-linejoin="round"/>
+      ${small ? '' : '<circle cx="22.6" cy="14.6" r="1.6" fill="#A78BFA"/><circle cx="24.6" cy="9.8" r="1.6" fill="#67C8F0"/>'}
+      <circle cx="23.4" cy="4.2" r="${small ? 3.6 : 2.9}" fill="#22D3EE" class="pulse"/>
+      <path d="${small ? 'M16 11.2 L20.8 16 L16 20.8 L11.2 16 Z' : 'M16 12 L20 16 L16 20 L12 16 Z'}" fill="#FF5470"/></svg>
     <span class="font-semibold tracking-tight" style="font-size:${size * 0.82}px">plexus</span>`;
 }
 function toast(text, ms = 2800) {
