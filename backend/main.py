@@ -175,21 +175,26 @@ GEMINI_BUSY_UNTIL = 0.0   # after a rate limit, let the graph agent answer for a
 GEMINI_TIMEOUT = float(os.getenv("GEMINI_TIMEOUT", "10"))   # slower than this, the graph agent answers instead
 
 
-def _gemini(body, user, trace):
-    """Gemini picks tools over MCP as this person, on this incident; its calls become the trace."""
+def _gemini(body, user, trace, done):
+    """Gemini picks tools over MCP as this person, on this incident; its calls become the trace.
+    done collects each call as it happens, so a fallback can reuse them if Gemini is cut short."""
     turns = memory.load_turns(body.incident_id, user["name"], pane="agent", limit=12)
     history = [(t["role"], t["text"][:2000]) for t in turns]
     answer, calls = asyncio.run(asyncio.wait_for(
-        mcp_agent.run(body.message, user["name"], body.incident_id, history=history, verbose=False, patient=False),
+        mcp_agent.run(body.message, user["name"], body.incident_id, history=history, verbose=False, patient=False,
+                      calls=done),
         GEMINI_TIMEOUT))
     for c in calls:
         trace.append(_trace_item(c["name"], c["args"], c["result"]))
     return answer
 
 
-def _answer(body, user, trace):
+def _answer(body, user, trace, done=()):
     def run(name, args):
-        out = registry.run_tool(name, args, body.incident_id, user)
+        # if Gemini already ran this exact call before it was cut short, reuse the result: never do an action twice
+        same = lambda a, b: {k: str(v).strip().upper() for k, v in a.items()} == {k: str(v).strip().upper() for k, v in b.items()}
+        out = next((c["result"] for c in done if c["name"] == name and same(c["args"], args)), None) \
+            or registry.run_tool(name, args, body.incident_id, user)
         trace.append(_trace_item(name, args, out))
         return out
     return desk_agent.answer(body.message, body.incident_id, user, run)
@@ -208,10 +213,10 @@ def agent_chat(body: ChatIn, user=Depends(current_user)):
         _rate_limit(user)
         t0 = time.perf_counter()
         global GEMINI_BUSY_UNTIL
-        trace, engine = [], "graph"
+        trace, engine, done = [], "graph", []
         if body.agent == "gemini" and mcp_agent.available() and time.time() >= GEMINI_BUSY_UNTIL:
             try:
-                answer, engine = _gemini(body, user, trace), "gemini"
+                answer, engine = _gemini(body, user, trace, done), "gemini"
             except Exception as e:  # noqa: BLE001 - whatever went wrong, the graph agent answers
                 while isinstance(e, BaseExceptionGroup) and e.exceptions:
                     e = e.exceptions[0]
@@ -219,7 +224,7 @@ def agent_chat(body: ChatIn, user=Depends(current_user)):
                 GEMINI_BUSY_UNTIL = time.time() + (60 if isinstance(e, (mcp_agent.GeminiBusy, TimeoutError)) else 300)
                 trace = []
         if engine == "graph":
-            answer = _answer(body, user, trace)
+            answer = _answer(body, user, trace, done)
         try:   # conversation memory lives in the graph, per person and incident
             memory.save_turn(body.incident_id, user["name"], "agent", "user", body.message)
             memory.save_turn(body.incident_id, user["name"], "agent", "assistant", answer)

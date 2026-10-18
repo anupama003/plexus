@@ -506,8 +506,16 @@ def create_fix_tasks(cve_id, session_id="mcp-default", actor=None, **_):
                 "existing_tickets": tickets, "status": new[0][1] if new else "open"}
         (created if new and new[0][0] else existing).append(item)
         paths.append(f"(Task:{title})-[:ASSIGNED_TO]->(Person:{assignee})")
-    msg = (f"Assigned {plural(len(created), 'fix', 'fixes')}" + (f", {len(existing)} already assigned" if existing else "") +
-           (f", skipped {len(skipped)}" if skipped else "") + ".")
+    skip = f", skipped {len(skipped)}" if skipped else ""
+    if created:
+        msg = (f"Assigned {plural(len(created), 'fix', 'fixes')}"
+               + (f" ({len(existing)} {'was' if len(existing) == 1 else 'were'} already assigned)" if existing else "") + skip + ".")
+    elif existing:
+        n = len(existing)
+        msg = (("This fix is" if n == 1 else "Both fixes are" if n == 2 else f"All {n} fixes are") + " already assigned."
+               + (f" Skipped {len(skipped)}." if skipped else ""))
+    else:
+        msg = "Nothing to assign" + skip + "."
     return {"found": True, "status": "ok", "cypher": "", "paths": paths,
             "touched": [f"Person:{c['assigned_to']}" for c in created + existing] +
                        [f"Product:{c['product']}" for c in created + existing],

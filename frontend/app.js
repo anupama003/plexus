@@ -479,7 +479,7 @@ async function restoreHistory() {
   note.textContent = 'Earlier in this incident';
   $('log').appendChild(note);
   turns.forEach((t) => {
-    if (t.role === 'user') { addUser(t.text); ASKED.add(t.text); return; }
+    if (t.role === 'user') { addUser(t.text); ASKED.add(said(t.text)); return; }
     const el = document.createElement('div');
     el.className = 'fade-in opacity-80';
     el.innerHTML = `<div class="md">${md(t.text)}</div><div class="text-[10px] text-faint mt-1">${timeOf(t.ts)}</div>`;
@@ -668,6 +668,7 @@ const FOLLOW = [
   { label: "A bug we don't know", q: 'Are we affected by CVE-2026-31337?', need: () => true },
 ];
 const ANSWERS = [], ASKED = new Set();
+const said = (t) => (t || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();   // typed or clicked, the same question
 let BUSY = false;
 
 // Counts on the Inbox button and on each of its tabs.
@@ -731,7 +732,7 @@ function resetChat() {
 }
 function renderChips() {
   const cves = new Set((BOARD?.investigated || []).map((i) => i.cve));
-  const list = !may('investigate') ? [] : FOLLOW.filter((f) => !ASKED.has(f.q) && f.need(cves) && (ANSWERS.length || f.start)).slice(0, 3);
+  const list = !may('investigate') ? [] : FOLLOW.filter((f) => !ASKED.has(said(f.q)) && !ASKED.has(said(f.label)) && f.need(cves) && (ANSWERS.length || f.start)).slice(0, 3);
   $('chips').innerHTML = list.map((f) => `<button class="flex-none chip text-muted hover:text-fg hover:border-faint" data-q="${esc(f.q)}">${esc(f.label)}</button>`).join('');
   $('chips').querySelectorAll('[data-q]').forEach((b) => b.onclick = () => ask(b.dataset.q));
 }
@@ -838,7 +839,7 @@ async function ask(text) {
   text = (text || '').trim();
   if (!text || BUSY) return;
   if (!may('investigate')) return toast('Read-only access: open Inbox or Incident');
-  BUSY = true; $('send').disabled = true; $('input').value = ''; ASKED.add(text); renderChips();
+  BUSY = true; $('send').disabled = true; $('input').value = ''; ASKED.add(said(text)); renderChips();
   addUser(text);
   const el = addPending();
   try {

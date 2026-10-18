@@ -92,9 +92,10 @@ def available():
         importlib.util.find_spec("google.genai") is not None
 
 
-async def run(question, actor, incident, history=(), verbose=True, patient=True):
+async def run(question, actor, incident, history=(), verbose=True, patient=True, calls=None):
     """Returns (answer, calls). calls = [{"name", "args", "result"}] in the order Gemini chose them.
-    history = earlier [(role, text)] turns of this person on this incident, for follow-ups."""
+    history = earlier [(role, text)] turns of this person on this incident, for follow-ups.
+    calls, if given, is filled as tools run, so the caller still has them if this is cut short."""
     from google import genai
     from google.genai import types
     from mcp import ClientSession, StdioServerParameters
@@ -125,7 +126,7 @@ async def run(question, actor, incident, history=(), verbose=True, patient=True)
             contents = [types.Content(role="model" if role == "assistant" else "user",
                                       parts=[types.Part.from_text(text=text)]) for role, text in history]
             contents.append(types.Content(role="user", parts=[types.Part.from_text(text=question)]))
-            chosen = []
+            chosen = calls if calls is not None else []
             for _ in range(MAX_ROUNDS):
                 response = await _generate(client, contents, config, verbose, patient)
                 calls = response.function_calls or []
