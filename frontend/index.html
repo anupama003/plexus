@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>plexus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#07080D', surface: '#0C0E15', raised: '#12151F', line: '#1D2130', line2: '#2A2F42',
+            fg: '#E8EAF2', muted: '#8C93A8', faint: '#5A6178',
+            violet: '#8B5CF6', cyan: '#22D3EE', red: '#FF5470', amber: '#FFB547', green: '#3EE08F',
+          },
+          fontFamily: { sans: ['Geist', 'ui-sans-serif', 'system-ui'], mono: ['"Geist Mono"', 'ui-monospace', 'monospace'] },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="/static/style.css?v=__V__" />
+</head>
+<body class="font-sans text-[15px] antialiased">
+
+<!-- LANDING + SIGN-IN -->
+<section id="login" class="hidden min-h-screen px-4 flex flex-col">
+  <nav class="max-w-5xl w-full mx-auto py-5 flex items-center justify-between">
+    <div id="logo-big" class="flex items-center gap-2"></div>
+    <span class="chip text-muted">EU Cyber Resilience Act · Article 14</span>
+  </nav>
+  <div class="flex-1 flex flex-col items-center justify-center text-center max-w-5xl w-full mx-auto pb-16">
+    <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight">Every vulnerability,<br /><span class="grad">traced to every customer.</span></h1>
+    <p class="text-muted mt-5 text-lg max-w-xl">See which products a new bug reaches, who owns the fix, and file your EU reports before the 24-hour deadline.</p>
+    <div class="mt-6 flex flex-wrap justify-center gap-2 text-xs">
+      <span class="chip text-amber" style="border-color:rgba(255,181,71,.35)">24h first alert</span>
+      <span class="chip text-violet" style="border-color:rgba(139,92,246,.4)">72h full report</span>
+      <span class="chip text-muted">fines up to €15M or 2.5% of turnover</span>
+      <a href="#cases" id="caselink" class="chip text-cyan hidden" style="border-color:rgba(34,211,238,.35)">Real cases ↓</a>
+    </div>
+    <div class="mt-12 w-full">
+      <div class="text-xs text-faint mb-3">Sign in to <span class="text-muted">Fernwave</span> · <a href="#fernwave" class="text-cyan hover:underline">what's Fernwave? ↓</a></div>
+      <div id="personas" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-left"></div>
+    </div>
+  </div>
+  <section id="fernwave" class="hidden max-w-5xl w-full mx-auto pb-24 pt-6 scroll-mt-6">
+    <div class="text-[11px] uppercase tracking-[.18em] text-faint">The company in this demo</div>
+    <h2 class="text-2xl sm:text-4xl font-semibold tracking-tight mt-2 leading-tight">Meet Fernwave.<br /><span class="grad">An EU fintech with a lot to trace.</span></h2>
+    <p class="text-sm text-muted mt-3 max-w-2xl leading-relaxed">Fernwave B.V. is a fictional payments company in Amsterdam. It sells card terminals and a desktop treasury app to businesses across Europe, and runs identity, open-banking and settlement services behind them. That mix puts it under both EU laws: the <b class="text-fg">Cyber Resilience Act</b> for what it sells, and <b class="text-fg">DORA</b> for the financial services it runs.</p>
+    <div id="fwstats" class="mt-7 grid grid-cols-3 sm:grid-cols-6 gap-2"></div>
+    <div class="mt-10 text-[11px] uppercase tracking-[.15em] text-faint">What it makes and runs</div>
+    <div id="fwproducts" class="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4"></div>
+    <div class="mt-12 text-[11px] uppercase tracking-[.15em] text-faint">How plexus plugs into Fernwave</div>
+    <div id="fwflow" class="mt-4"></div>
+  </section>
+  <section id="cases" class="hidden max-w-5xl w-full mx-auto pb-20 pt-4 scroll-mt-6">
+    <div class="grid gap-10 lg:grid-cols-[1fr_400px] items-center">
+      <div>
+        <div class="text-[11px] uppercase tracking-[.18em] text-faint">2021 → 2025 · real incidents</div>
+        <h2 class="text-2xl sm:text-4xl font-semibold tracking-tight mt-2 leading-tight">Every one of these bugs was public.<br /><span class="grad">Finding it inside your products was the hard part.</span></h2>
+        <p class="text-sm text-muted mt-3 max-w-md">Swipe through the cases. Tap a card to flip it and see what plexus finds when it replays that bug against Fernwave, live.</p>
+        <div id="caselist" class="mt-6 grid grid-cols-2 gap-x-6 gap-y-1 max-w-md text-sm"></div>
+      </div>
+      <div>
+        <div id="deck" class="deck" tabindex="0" aria-roledescription="carousel" aria-label="Real incidents"></div>
+        <div class="mt-8 flex items-center gap-3 w-[min(370px,100%)] mx-auto">
+          <button id="dprev" class="btn !rounded-full !px-2.5" aria-label="Previous case">←</button>
+          <div id="dtl" class="tl flex-1"></div>
+          <button id="dnext" class="btn !rounded-full !px-2.5" aria-label="Next case">→</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer id="landfoot" class="py-5 text-center text-[11px] text-faint">Fernwave is a demo workspace.</footer>
+</section>
+
+<!-- APP -->
+<section id="app" class="hidden h-screen flex flex-col">
+  <header class="border-b hair px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div id="logo-small" class="flex items-center gap-2"></div>
+    <div class="flex items-center gap-1">
+      <button id="incident" class="chip text-muted hover:text-fg" title="Your shared case file for this security event: decisions, fixes and the timeline. Everyone on it sees the same findings."></button>
+      <button id="newinc" class="btn !rounded-full" title="Start a new incident with a clean slate">New</button>
+      <button id="inboxbtn" class="btn !rounded-full hidden" title="New alerts, fixes handed to you, and every open risk">🔔 Inbox <span id="inboxn" class="font-mono"></span></button>
+    </div>
+    <div id="clockbox" class="flex items-center gap-3 sm:gap-4 min-w-0 order-last w-full md:order-none md:w-auto md:flex-1 md:justify-center">
+      <div class="flex-1 min-w-0 md:flex-none md:w-48" title="EU deadline for the first alert">
+        <div class="flex justify-between gap-2 whitespace-nowrap text-[11px] text-muted"><span><span class="sm:hidden">24h</span><span class="hidden sm:inline">24h first alert</span></span><span id="c24" class="font-mono text-faint">not started</span></div>
+        <div class="bar mt-1"><i id="b24" style="width:0;background:var(--amber)"></i></div>
+      </div>
+      <div class="flex-1 min-w-0 md:flex-none md:w-48" title="EU deadline for the full report">
+        <div class="flex justify-between gap-2 whitespace-nowrap text-[11px] text-muted"><span><span class="sm:hidden">72h</span><span class="hidden sm:inline">72h full report</span></span><span id="c72" class="font-mono text-faint">not started</span></div>
+        <div class="bar mt-1"><i id="b72" style="width:0;background:var(--violet)"></i></div>
+      </div>
+      <button id="reportbtn" class="btn flex-none !text-xs !px-3 !py-1.5" disabled></button>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <button id="tourbtn" class="btn !rounded-full" title="A one-minute guided tour">? Tour</button>
+      <div id="me" class="flex items-center gap-2"></div>
+    </div>
+  </header>
+
+  <main class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(400px,2fr)_3fr] gap-3 p-3 overflow-y-auto lg:overflow-hidden">
+    <!-- MAP. First on mobile, right on desktop. -->
+    <section id="graphcard" class="card overflow-hidden flex flex-col h-[46vh] lg:h-auto lg:min-h-0 lg:order-2">
+      <div class="px-4 py-2.5 border-b hair flex flex-wrap items-center gap-x-4 gap-y-1">
+        <h2 class="font-semibold">Exposure map</h2>
+        <div id="hopinfo" class="text-xs text-muted"></div>
+        <div id="views" class="ml-auto flex rounded-lg border hair p-0.5 text-xs">
+          <button data-view="path" class="px-2.5 py-1 rounded-md border border-transparent text-muted hover:text-fg disabled:opacity-40 disabled:hover:text-muted">Path</button>
+          <button data-view="radial" class="px-2.5 py-1 rounded-md border border-transparent text-muted hover:text-fg disabled:opacity-40 disabled:hover:text-muted">Blast radius</button>
+          <button data-view="company" class="px-2.5 py-1 rounded-md border border-transparent text-muted hover:text-fg">Whole company</button>
+        </div>
+      </div>
+      <div class="relative flex-1 min-h-0">
+        <div id="graph" class="absolute inset-0"></div>
+        <div id="cols" class="absolute top-2 inset-x-0 h-4 hidden sm:block text-[10px] uppercase tracking-[.12em] pointer-events-none select-none"></div>
+        <div id="legend" class="absolute left-3 bottom-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] pointer-events-none select-none"></div>
+      </div>
+    </section>
+
+    <!-- CHAT -->
+    <section id="chatcard" class="card flex flex-col h-[70vh] lg:h-auto lg:min-h-0 lg:order-1 overflow-hidden">
+      <div class="px-4 py-2.5 border-b hair flex items-center gap-2">
+        <span class="dot pulse" style="background:var(--cyan);box-shadow:0 0 10px var(--cyan)"></span>
+        <h2 class="font-semibold">Ask plexus</h2>
+      </div>
+      <div id="log" class="scroll flex-1 overflow-y-auto p-4 space-y-6"></div>
+      <div class="border-t hair p-3 space-y-2 relative">
+        <div class="flex items-center gap-1.5 min-h-[26px]">
+          <div id="chips" class="scroll flex gap-1.5 overflow-x-auto"></div>
+        </div>
+        <form id="form" class="flex items-center gap-2">
+          <input id="input" maxlength="2000" autocomplete="off" aria-label="Question"
+                 placeholder="e.g. Are we affected by CVE-2023-4863?"
+                 class="flex-1 min-w-0 bg-raised border hair rounded-xl px-3 py-2.5 outline-none focus:border-cyan/60 placeholder:text-faint" />
+          <button id="send" class="rounded-xl px-4 py-2.5 font-medium text-ink disabled:opacity-40"
+                  style="background:linear-gradient(90deg,var(--violet),var(--cyan))">Ask</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</section>
+
+<!-- REPORT DRAWER -->
+<div id="drawer" class="hidden fixed inset-0 z-40">
+  <div id="drawer-bg" class="absolute inset-0 bg-black/60"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-[600px] bg-surface border-l hair flex flex-col fade-in">
+    <div class="px-5 py-4 border-b hair flex items-start gap-3">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-lg font-semibold">EU report</h2>
+        <div class="text-xs text-faint mt-0.5">Pre-filled from this incident · demo submission</div>
+      </div>
+      <select id="cvepick" class="field !w-auto !py-1 font-mono text-xs"></select>
+      <button id="drawer-x" class="btn" aria-label="Close">✕</button>
+    </div>
+    <div id="drawer-body" class="scroll flex-1 overflow-y-auto p-5 space-y-4"></div>
+  </aside>
+</div>
+
+<!-- SIDE PANEL (queue, timeline) -->
+<div id="panel" class="hidden fixed inset-0 z-40">
+  <div id="panel-bg" class="absolute inset-0 bg-black/60"></div>
+  <aside class="absolute right-0 top-0 h-full w-full max-w-[680px] bg-surface border-l hair flex flex-col fade-in">
+    <div class="px-5 py-4 border-b hair flex items-center gap-3">
+      <h2 id="panel-title" class="text-lg font-semibold flex-1"></h2>
+      <div id="panel-tabs" class="flex rounded-lg border hair p-0.5 text-xs"></div>
+      <button id="panel-x" class="btn" aria-label="Close">✕</button>
+    </div>
+    <div id="panel-body" class="scroll flex-1 overflow-y-auto p-5"></div>
+    <div id="panel-foot" class="px-5 py-3 border-t hair text-[11px] text-faint"></div>
+  </aside>
+</div>
+<div id="chippop" class="hidden fixed z-50 card !bg-surface p-4 shadow-2xl w-[340px] max-w-[calc(100vw-24px)]"></div>
+
+<!-- TOUR -->
+<div id="tour" class="hidden">
+  <div id="tour-spot"></div>
+  <div id="tour-tip" class="card !bg-surface p-4 shadow-2xl">
+    <div class="flex items-center justify-between text-[10px] uppercase tracking-[.15em] text-faint"><span id="tour-n"></span><button id="tour-skip" class="hover:text-fg">skip</button></div>
+    <h3 id="tour-title" class="font-semibold mt-1"></h3>
+    <p id="tour-text" class="text-sm text-muted mt-1.5 leading-relaxed"></p>
+    <div class="mt-3 flex justify-between"><button id="tour-back" class="btn">← back</button>
+      <button id="tour-next" class="rounded-lg px-3 py-1 text-sm font-medium text-ink" style="background:linear-gradient(90deg,var(--violet),var(--cyan))">next →</button></div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden card px-4 py-2 text-sm fade-in"></div>
+
+<script src="/static/app.js?v=__V__"></script>
+</body>
+</html>
