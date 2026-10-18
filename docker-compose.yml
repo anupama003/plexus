@@ -1,0 +1,25 @@
+# Everything in one command:  docker compose up --build
+services:
+  falkordb:
+    # FalkorDB 6.0.2, pinned by digest so every build (and every judge) gets the same database
+    image: falkordb/falkordb@sha256:107455e862a824e45e8e9f5a7fbfdf5e00a08b14e13eae2577c72fd9e3f59ba6
+    ports:
+      - "6479:6379"   # graph database (host 6479 avoids clashing with a local Redis)
+      - "3479:3000"   # FalkorDB Browser UI -> http://localhost:3479
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 20
+
+  seed:
+    build: .
+    command: python setup_db.py
+    environment: { FALKOR_HOST: falkordb, FALKOR_PORT: "6379" }
+    depends_on: { falkordb: { condition: service_healthy } }
+
+  app:
+    build: .
+    ports: ["8042:8042"]
+    env_file: backend/.env
+    environment: { FALKOR_HOST: falkordb, FALKOR_PORT: "6379" }
+    depends_on: { seed: { condition: service_completed_successfully } }
