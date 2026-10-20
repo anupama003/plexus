@@ -1,0 +1,17 @@
+# Pings the live demo so Render's free plan doesn't sleep (15 min) and the
+# FalkorDB Cloud free instance doesn't stop (1 day unused). /api/health runs a real graph query.
+name: keep demo awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping the app and its database
+        run: |
+          curl -fsS --retry 3 --retry-delay 20 --max-time 120 https://plexus-e0xc.onrender.com/api/health
